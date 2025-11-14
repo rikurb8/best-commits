@@ -1,0 +1,16 @@
+[project]
+name = "best-commits"
+version = "0.1.0"
+description = "Automated Git Commit Generator"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.40.0",
+    "rich>=13.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []

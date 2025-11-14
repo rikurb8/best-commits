@@ -8,6 +8,7 @@ This is a collection of standalone Python scripts for Git workflow automation. E
 
 **Current Scripts:**
 - `commit-changes.py`: AI-powered commit message generator using Claude Haiku 4.5
+- `review-changes.py`: AI-powered code review for uncommitted changes, with optional commit flow
 
 ## Architecture
 
@@ -33,16 +34,27 @@ All scripts follow this structure:
 5. Strip any markdown formatting from response
 6. Create commit with `git commit -m <message>`
 
+### Review Script Flow
+1. Check for uncommitted changes (`git status --porcelain`)
+2. Collect diff data (status, unstaged diff, staged diff)
+3. Filter out lock files and other noise (package-lock.json, etc.)
+4. Send diffs to Claude API with code review prompt
+5. Display review feedback with summary, issues, suggestions, and breaking changes
+6. Prompt user to proceed with commit (y/n)
+7. If yes, chain to `commit-changes.py` for message generation and commit
+
 ## Development Commands
 
 ### Testing Scripts
 ```bash
-# Run script directly with uv
+# Run scripts directly with uv
 uv run commit-changes.py
+uv run review-changes.py
 
 # Test from another git repository
 cd /path/to/test/repo
 uv run /Users/riku/projects/best-commits/commit-changes.py
+uv run /Users/riku/projects/best-commits/review-changes.py
 ```
 
 ### Adding Dependencies
@@ -65,7 +77,7 @@ chmod +x your-script.py
 
 ## Environment Variables
 
-- `GIT_API_KEY`: Anthropic API key for Claude access (required for commit script)
+- `GIT_API_KEY`: Anthropic API key for Claude access (required for both commit and review scripts)
 - `BETTER_COMMIT_MODEL`: (Planned) Allow specifying alternative AI models via LiteLLM
 
 ## Code Style
@@ -79,6 +91,10 @@ chmod +x your-script.py
   - green: success
   - red: errors
 
-## Future Development
+## Workflow Recommendations
 
-See `specs/01-review-functionality.md` for planned `review` command which will analyze uncommitted changes and provide feedback before committing.
+For best results, use the review script before committing:
+1. Make your changes
+2. Run `uv run review-changes.py` to get AI feedback
+3. Address any issues or suggestions
+4. Proceed with commit when prompted (or run `commit-changes.py` separately)

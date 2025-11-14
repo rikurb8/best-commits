@@ -4,6 +4,17 @@ Installable command-line scripts to make working with git easier.
 
 ## Available Scripts
 
+### `review`
+AI-powered code review for uncommitted changes. Analyzes your code and provides feedback before you commit.
+
+**Features:**
+- Reviews both staged and unstaged changes
+- Provides summary of changes, potential issues, and improvement suggestions
+- Filters out noise (lock files, etc.) for cleaner reviews
+- Interactive prompt to proceed with commit
+- Chains directly to `commit` command for seamless workflow
+- Beautiful terminal output with markdown formatting
+
 ### `commit`
 AI-powered commit message generator using Claude API. Automatically analyzes your git changes and creates well-formatted, conventional commit messages.
 
@@ -26,8 +37,18 @@ AI-powered commit message generator using Claude API. Automatically analyzes you
 git clone https://github.com/YOUR_USERNAME/best-commits.git
 cd best-commits
 
-# Create global command
-mkdir -p ~/.local/bin && cat > ~/.local/bin/commit << EOF
+# Create global commands
+mkdir -p ~/.local/bin
+
+# Create 'review' command
+cat > ~/.local/bin/review << EOF
+#!/bin/bash
+uv run "$PWD/review-changes.py" "\$@"
+EOF
+chmod +x ~/.local/bin/review
+
+# Create 'commit' command
+cat > ~/.local/bin/commit << EOF
 #!/bin/bash
 uv run "$PWD/commit-changes.py" "\$@"
 EOF
@@ -41,6 +62,11 @@ export GIT_API_KEY=your_anthropic_api_key
 
 ```bash
 cd ~/any-git-repo
+
+# Review changes and optionally commit
+review
+
+# Or directly commit without review
 commit
 ```
 
@@ -78,8 +104,9 @@ To add a new script to this repo:
 
 ## API Usage
 
-The `commit` script uses Claude Haiku 4.5:
+Both `review` and `commit` scripts use Claude Haiku 4.5:
 - **Model:** `claude-haiku-4-5-20251001`
+- **Token limits:** 1024 for commit messages, 2048 for reviews
 
 ## Future Plans
 
@@ -91,10 +118,11 @@ The `commit` script uses Claude Haiku 4.5:
 - Improve commit message quality
   - More specific on what to include in commit messages
   - Should there be more context than just the uncommited changes?
-  
-- Review work functionality (Draft spec: docs/01-review-functionality.md)
-  - [ ] Add "review" command which analyzes unchanged commits, gives small summary and suggestions for improvements or go ahead for making commit
-    - Should it have more context, like "recent relevant commits"
+
+- Enhance review functionality
+  - Add context from recent relevant commits
+  - Support for custom review rules/checklist
+  - Integration with linters and test frameworks
 
 ## License
 

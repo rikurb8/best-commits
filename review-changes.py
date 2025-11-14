@@ -164,6 +164,20 @@ def prompt_user_to_commit() -> bool:
 def run_commit_script() -> None:
     """Run the commit-changes.py script."""
     console.print("\n[cyan]🚀 Running commit script...[/cyan]\n")
+
+    # Check if 'commit' command exists in PATH
+    commit_path = subprocess.run(
+        ["which", "commit"], capture_output=True, text=True
+    ).returncode
+
+    if commit_path != 0:
+        console.print(
+            "[red]❌ Error: 'commit' command not found in PATH.[/red]\n"
+            "[yellow]Please ensure the commit script is installed and available in your PATH.[/yellow]\n"
+            "[yellow]You may need to install it or add its location to your PATH environment variable.[/yellow]"
+        )
+        sys.exit(1)
+
     try:
         subprocess.run(["commit"], check=True)
     except subprocess.CalledProcessError as e:

@@ -21,5 +21,5 @@ Unlike `commit` which generates the message, `review` focuses on evaluating the 
 
 ### 3. Script Structure
 - New `review-changes.py` file following same pattern as `commit-changes.py`
-- Reuse API client setup and diff collection logic
 - Different system prompt optimized for code review feedback
+- Ignore package-lock.json changes and other unnecessary files that clutter the review process

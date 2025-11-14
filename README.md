@@ -80,8 +80,21 @@ To add a new script to this repo:
 
 The `commit` script uses Claude Haiku 4.5:
 - **Model:** `claude-haiku-4-5-20251001`
-- **Cost:** ~$0.001 per commit message
-- **Speed:** ~1-2 seconds
+
+## Future Plans
+
+- Support for more AI models
+  - [ ] Setup LiteLLM 
+  - [ ] use BETTER_COMMIT_MODEL env variable to specify model, document how to use it
+  - [ ] Document how to configure credentials for different models (""OPENAI_API_KEY", "XAI_API_KEY", etc)
+
+- Improve commit message quality
+  - More specific on what to include in commit messages
+  - Should there be more context than just the uncommited changes?
+  
+- Review work functionality (Draft spec: docs/01-review-functionality.md)
+  - [ ] Add "review" command which analyzes unchanged commits, gives small summary and suggestions for improvements or go ahead for making commit
+    - Should it have more context, like "recent relevant commits"
 
 ## License
 

@@ -1,191 +1,88 @@
 # Best Commits
 
-AI-powered git commit message generator using Claude API. Automatically analyze your changes and create informative, well-formatted commit messages.
+Installable command-line scripts to make working with git easier.
 
-## Features
+## Available Scripts
 
-- Analyzes both staged and unstaged changes
-- Generates conventional commit messages using Claude Haiku 4.5
-- Follows best practices (imperative mood, 50-char summary, etc.)
-- Beautiful terminal output with rich formatting
-- Single-file executable with uvx (no installation required)
-- Available in both Python and JavaScript/zx versions
+### `commit`
+AI-powered commit message generator using Claude API. Automatically analyzes your git changes and creates well-formatted, conventional commit messages.
 
-## Prerequisites
-
-- Git repository with changes to commit
-- Anthropic API key (get one at https://console.anthropic.com)
-- Python 3.8+ (for Python version) or Node.js (for JavaScript version)
-
-## Quick Start
-
-### Python Version (Recommended)
-
-The Python version uses `uvx` for zero-installation execution:
-
-```bash
-# Set your API key
-export GIT_API_KEY=your_anthropic_api_key
-
-# Run directly with uvx (no installation needed!)
-uvx commit-changes.py
-
-# Or make it executable and run it
-chmod +x commit-changes.py
-./commit-changes.py
-```
-
-### JavaScript/zx Version
-
-```bash
-# Set your API key
-export GIT_API_KEY=your_anthropic_api_key
-
-# Run with npx zx
-npx zx commit-changes.mjs
-```
+**Features:**
+- Analyzes staged and unstaged changes
+- Generates conventional commit messages (feat:, fix:, docs:, etc.)
+- Follows best practices (imperative mood, 50-char summary)
+- Beautiful terminal output
 
 ## Installation
 
-### Python Version
+**Prerequisites:**
+- [uv](https://docs.astral.sh/uv/) - Fast Python package installer
+- [Anthropic API key](https://console.anthropic.com) - Set as `GIT_API_KEY` env variable
 
-No installation required! The script uses `uvx` which automatically handles dependencies.
-
-If you want to install it system-wide:
-
-```bash
-# Copy to your local bin directory
-cp commit-changes.py ~/.local/bin/best-commit
-chmod +x ~/.local/bin/best-commit
-
-# Now you can run it from anywhere
-cd any-git-repo
-best-commit
-```
-
-### JavaScript Version
+**Install globally:**
 
 ```bash
-# Install zx globally (optional)
-npm install -g zx
+# Clone and navigate to repo
+git clone https://github.com/YOUR_USERNAME/best-commits.git
+cd best-commits
 
-# Install dependencies for the script
-npm install @anthropic-ai/sdk zx
-```
+# Create global command
+mkdir -p ~/.local/bin && cat > ~/.local/bin/commit << EOF
+#!/bin/bash
+uv run "$PWD/commit-changes.py" "\$@"
+EOF
+chmod +x ~/.local/bin/commit
 
-## Configuration
-
-Set the `GIT_API_KEY` environment variable with your Anthropic API key:
-
-```bash
-# Temporary (current session only)
+# Set API key (add to ~/.bashrc or ~/.zshrc for persistence)
 export GIT_API_KEY=your_anthropic_api_key
-
-# Permanent (add to ~/.bashrc or ~/.zshrc)
-echo 'export GIT_API_KEY=your_anthropic_api_key' >> ~/.bashrc
 ```
 
-## How It Works
+**Usage:**
 
-1. **Detects Changes**: Checks for uncommitted changes in your git repository
-2. **Stages Files**: Automatically stages all changes (`git add -A`)
-3. **Analyzes Diff**: Collects git status and diff information
-4. **Generates Message**: Sends changes to Claude API for analysis
-5. **Creates Commit**: Uses the generated message to create a commit
-
-## Commit Message Format
-
-The generated messages follow conventional commit standards:
-
-- **Format**: `type: brief summary (≤50 chars)`
-- **Types**: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
-- **Style**: Imperative mood ("Add feature" not "Added feature")
-- **Content**: Focus on WHAT and WHY, not HOW
-- **Details**: Optional detailed description after blank line
-
-### Example Output
-
+```bash
+cd ~/any-git-repo
+commit
 ```
-🔍 Checking for uncommitted changes...
 
-┏━━━━━━━━━━━ Git Status ━━━━━━━━━━━┓
-┃ M  commit-changes.py            ┃
-┃ ?? README.md                    ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+## Adding New Scripts
 
-🤖 Generating commit message with Claude API...
+To add a new script to this repo:
 
-┏━━━━━━━━ Commit Message ━━━━━━━━┓
-┃ feat: Add Python version with  ┃
-┃ rich formatting                 ┃
-┃                                 ┃
-┃ Create uvx-compatible Python   ┃
-┃ script with beautiful terminal ┃
-┃ output using rich library      ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+1. **Create executable Python script** with uv-compatible shebang:
+   ```python
+   #!/usr/bin/env python3
+   # /// script
+   # dependencies = [
+   #   "package-name>=version",
+   # ]
+   # ///
+   ```
 
-💾 Creating commit...
+2. **Make it executable:**
+   ```bash
+   chmod +x your-script.py
+   ```
 
-✓ Commit created successfully!
-```
+3. **Test with uv:**
+   ```bash
+   uv run your-script.py
+   ```
+
+4. **Add installation instructions** to this README
+
+**Requirements:**
+- Must be runnable with `uv run`
+- Must include PEP 723 inline script metadata for dependencies
+- Should be a single-file executable
+- Should have clear, focused purpose
 
 ## API Usage
 
-The script uses Claude Haiku 4.5, which is fast and cost-effective:
-
-- **Model**: `claude-haiku-4-5-20251001`
-- **Cost**: ~$0.001 per commit message
-- **Speed**: ~1-2 seconds per generation
-
-## Troubleshooting
-
-### "GIT_API_KEY environment variable is not set"
-
-Make sure you've set your API key:
-```bash
-export GIT_API_KEY=your_key_here
-```
-
-### "No uncommitted changes found"
-
-The repository is clean. Make some changes first:
-```bash
-echo "test" > test.txt
-./commit-changes.py
-```
-
-### "Git command failed"
-
-Ensure you're in a git repository:
-```bash
-git init  # if not already a repo
-```
-
-### Python version: "uvx: command not found"
-
-Install uv:
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or with pip
-pip install uv
-```
+The `commit` script uses Claude Haiku 4.5:
+- **Model:** `claude-haiku-4-5-20251001`
+- **Cost:** ~$0.001 per commit message
+- **Speed:** ~1-2 seconds
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
-## Acknowledgments
-
-- Built with [Claude API](https://www.anthropic.com/api) by Anthropic
-- Python version uses [rich](https://github.com/Textualize/rich) for beautiful terminal output
-- JavaScript version uses [zx](https://github.com/google/zx) for scripting
-- Inspired by best practices from [Conventional Commits](https://www.conventionalcommits.org/)

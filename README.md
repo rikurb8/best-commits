@@ -30,40 +30,45 @@ AI-powered commit message generator using Claude API. Automatically analyzes you
 - [uv](https://docs.astral.sh/uv/) - Fast Python package installer
 - API key for your chosen AI model (default: [Anthropic API key](https://console.anthropic.com))
 
-**Install globally:**
+### Quick Install
 
 ```bash
-# Clone and navigate to repo
+# Clone the repository
 git clone https://github.com/YOUR_USERNAME/best-commits.git
 cd best-commits
 
-# Create global commands
-mkdir -p ~/.local/bin
+# Run the installer (installs both commit and review)
+./scripts/install-tool.sh
 
-# Create 'review' command
-cat > ~/.local/bin/review << EOF
-#!/bin/bash
-uv run "$PWD/review-changes.py" "\$@"
-EOF
-chmod +x ~/.local/bin/review
+# Or install individual tools
+./scripts/install-tool.sh commit
+./scripts/install-tool.sh review
+```
 
-# Create 'commit' command
-cat > ~/.local/bin/commit << EOF
-#!/bin/bash
-uv run "$PWD/commit-changes.py" "\$@"
-EOF
-chmod +x ~/.local/bin/commit
+The installer creates symlinks in `~/.local/bin/` pointing to the tools. Make sure this directory is in your PATH:
 
-# Set API key (add to ~/.bashrc or ~/.zshrc for persistence)
+```bash
+# Add to ~/.bashrc, ~/.zshrc, or equivalent
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Configure API Key
+
+Set your API key (add to your shell's rc file for persistence):
+
+```bash
 # For Anthropic Claude (default):
 export ANTHROPIC_API_KEY=your_anthropic_api_key
+
 # OR use legacy variable name:
 export GIT_API_KEY=your_anthropic_api_key
 
 # For other models, see "API Key Configuration" section below
 ```
 
-**Usage:**
+### Usage
+
+Once installed, use the tools from any git repository:
 
 ```bash
 cd ~/any-git-repo
@@ -73,6 +78,21 @@ review
 
 # Or directly commit without review
 commit
+```
+
+### Uninstall
+
+To remove installed tools:
+
+```bash
+cd best-commits
+
+# Uninstall all tools
+./scripts/install-tool.sh uninstall
+
+# Or uninstall individual tools
+./scripts/install-tool.sh uninstall commit
+./scripts/install-tool.sh uninstall review
 ```
 
 ## Adding New Scripts
@@ -117,7 +137,7 @@ Both `review` and `commit` scripts support multiple AI models via LiteLLM:
 
 ### Choosing a Different Model
 
-Set the `BETTER_COMMIT_MODEL` environment variable to use a different model:
+Set the `BETTER_COMMIT_MODEL` environment variable to use a different model. Model names follow the LiteLLM format:
 
 ```bash
 # Use OpenAI GPT-4
@@ -128,27 +148,35 @@ export OPENAI_API_KEY=your_openai_key
 export BETTER_COMMIT_MODEL=claude-opus-4-20250514
 export ANTHROPIC_API_KEY=your_anthropic_key
 
-# Use xAI Grok
-export BETTER_COMMIT_MODEL=grok-beta
+# Use xAI Grok (note: requires xai/ prefix)
+export BETTER_COMMIT_MODEL=xai/grok-beta
 export XAI_API_KEY=your_xai_key
+
+# Use Google Gemini
+export BETTER_COMMIT_MODEL=gemini/gemini-pro
+export GEMINI_API_KEY=your_gemini_key
 
 # Then use the commands as normal
 review
 commit
 ```
 
+**Note:** Some providers require a prefix in the model name (e.g., `xai/`, `gemini/`, `cohere/`). Check the [LiteLLM providers documentation](https://docs.litellm.ai/docs/providers) for the correct format.
+
 ### API Key Configuration
 
 Different model providers require different API key environment variables:
 
-| Provider | Models | Environment Variable |
-|----------|--------|---------------------|
-| Anthropic | `claude-*` | `ANTHROPIC_API_KEY` or `GIT_API_KEY` (legacy) |
-| OpenAI | `gpt-*`, `o1-*` | `OPENAI_API_KEY` |
-| xAI | `grok-*` | `XAI_API_KEY` |
-| Google | `gemini-*` | `GEMINI_API_KEY` |
-| Cohere | `command-*` | `COHERE_API_KEY` |
-| Mistral | `mistral-*` | `MISTRAL_API_KEY` |
+| Provider | Model Format | Example | Environment Variable |
+|----------|--------------|---------|---------------------|
+| Anthropic | `claude-*` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` or `GIT_API_KEY` (legacy) |
+| OpenAI | `gpt-*`, `o1-*` | `gpt-4`, `gpt-4o` | `OPENAI_API_KEY` |
+| xAI | `xai/*` | `xai/grok-beta` | `XAI_API_KEY` |
+| Google | `gemini/*` | `gemini/gemini-pro` | `GEMINI_API_KEY` |
+| Cohere | `cohere/*` or `command-*` | `cohere/command-r` | `COHERE_API_KEY` |
+| Mistral | `mistral/*` | `mistral/mistral-large` | `MISTRAL_API_KEY` |
+
+**Important:** Some providers (xAI, Google, Cohere, Mistral) require a provider prefix in the model name (e.g., `xai/grok-beta` not just `grok-beta`). Anthropic and OpenAI models can be used without a prefix.
 
 For a complete list of supported models and providers, see [LiteLLM documentation](https://docs.litellm.ai/docs/providers).
 

@@ -1,16 +1,24 @@
 [project]
 name = "best-commits"
 version = "0.1.0"
-description = "Automated Git Commit Generator"
+description = "AI-powered Git workflow automation tools"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "anthropic>=0.40.0",
+    "litellm>=1.0.0",
     "rich>=13.0.0",
 ]
+
+[project.scripts]
+commit = "tools.commit_changes:main"
+review = "tools.review_changes:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["tools"]
 
 [tool.uv]
 dev-dependencies = []

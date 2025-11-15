@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uvx --quiet --with litellm --with rich
+#!/usr/bin/env -S uv run --script
 # /// script
 # dependencies = [
 #   "litellm>=1.0.0",
@@ -21,11 +21,11 @@ Prerequisites:
 - Optional: BETTER_COMMIT_MODEL environment variable to specify model
 
 Usage:
-  ./review-changes.py
+  uv run tools/review_changes/__main__.py
   # or with custom model:
-  BETTER_COMMIT_MODEL=gpt-4 OPENAI_API_KEY=your_key ./review-changes.py
-  # or with uvx:
-  uvx review-changes.py
+  BETTER_COMMIT_MODEL=gpt-4 OPENAI_API_KEY=your_key uv run tools/review_changes/__main__.py
+  # or as executable:
+  ./tools/review_changes/__main__.py
 """
 
 import os

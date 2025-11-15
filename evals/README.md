@@ -1,23 +1,93 @@
 # Evals
 
-Collection of high level evaluations for various aspects of the project. "Can I run the project with docker compose and run a playwright script browsing the store and purchasing a basket of things", "how good commit message can you produce", "code review review"
+Automated evaluation system for AI-powered Git tools.
 
-## Create commit
+## Quick Start
 
-Goal: Create a informative but concise commit message. Focus on keeping the message informative and relevant. No absolute lenght limits but the message must be easily readable for humans.
+```bash
+# Evaluate commit message generation
+uv run evals/commit_changes/run_eval.py
 
-Task: Create commit based on given diff, prompt and model
+# Evaluate code review generation
+uv run evals/review_changes/run_eval.py
 
-Eval: Have separate Judge evaluate commit message and rate 1-100. Show ranking of models. Judge results againts results from previous top 3
+# View results summary
+uv run evals/commit_changes/run_eval.py --summary
+uv run evals/review_changes/run_eval.py --summary
+```
 
-## Review unchanged commited changes
+## Structure
 
-Goal: Create a Markdown formatted review of uncommited changes. No absolute lenght limits but the message must be easily readable for humans.
+```
+evals/
+├── storage/              # SQLite-based results storage
+│   ├── database.py       # Storage API
+│   ├── schema.sql        # Database schema
+│   └── README.md         # API documentation
+├── commit_changes/       # Commit message evals
+│   ├── basic_feature/    # Test: feature addition
+│   ├── bugfix/           # Test: bug fix
+│   ├── refactor/         # Test: refactoring
+│   └── run_eval.py       # Eval runner
+└── review_changes/       # Code review evals
+    ├── security_issue/   # Test: security vulnerability
+    ├── code_quality/     # Test: quality improvements
+    ├── breaking_change/  # Test: API breaking changes
+    └── run_eval.py       # Eval runner
+```
 
-Task: Review unchanged files based on tests materials, evaluate result compared others in history (different model, prompt, context). Review should contain:
+## Usage Examples
 
-- Summary of changes (what, why, how large the change is, if there's anything special to take in to account)
-- Correctness assessment (does it work as expected)
-- Code quality assessment (does it follow best practices, are the abstractions clear and on the right level, linter passes)
-- Documentation review (are all changes reflected in the documentation)
-- Testing assesment (are the changes being tested, should there be other new things to tests because of the changes, tests pass)
+### Run All Test Cases
+```bash
+uv run evals/commit_changes/run_eval.py
+uv run evals/review_changes/run_eval.py
+```
+
+### Run Specific Test Case
+```bash
+uv run evals/commit_changes/run_eval.py --case basic_feature
+uv run evals/review_changes/run_eval.py --case security_issue
+```
+
+### Test Different Models
+```bash
+uv run evals/commit_changes/run_eval.py --model gpt-4o
+uv run evals/commit_changes/run_eval.py --model claude-sonnet-4-5-20250514
+```
+
+### View Results Summary
+```bash
+uv run evals/commit_changes/run_eval.py --summary
+uv run evals/review_changes/run_eval.py --summary
+```
+
+## How It Works
+
+1. **Test Cases**: Each case contains a sample git diff and expected elements
+2. **Tool Execution**: The actual tool (`commit_changes` or `review_changes`) runs on the diff
+3. **Judge Evaluation**: Claude Sonnet 4.5 scores the output 1-100 based on criteria
+4. **Storage**: Results saved to SQLite database for historical tracking
+5. **Comparison**: New results compared against previous runs
+
+## Evaluation Criteria
+
+### Commit Messages (1-100 points)
+- **Conventional format** (20 pts): Correct prefix, ≤50 char summary
+- **Clarity** (30 pts): Clear, understandable message
+- **Conciseness** (20 pts): No redundant information
+- **Informativeness** (30 pts): Captures what and why
+
+### Code Reviews (1-100 points)
+- **Score accuracy** (25 pts): Gerrit score matches severity
+- **Completeness** (25 pts): Covers all aspects
+- **Actionability** (25 pts): Clear, specific feedback
+- **Tone** (25 pts): Professional, constructive
+
+## Adding New Test Cases
+
+1. Create directory: `evals/{tool_name}/{case_name}/`
+2. Add `README.md` (description, expected elements)
+3. Add `diff.txt` (sample git diff)
+4. Add `expected_elements.json` (evaluation checklist)
+5. Run eval: `uv run evals/{tool_name}/run_eval.py --case {case_name}`

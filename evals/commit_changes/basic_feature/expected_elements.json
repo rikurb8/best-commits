@@ -1,0 +1,7 @@
+{
+  "prefix": "feat:",
+  "keywords": ["auth", "JWT", "token"],
+  "max_summary_length": 50,
+  "imperative_mood": true,
+  "description": "Should mention adding authentication functionality with JWT tokens"
+}

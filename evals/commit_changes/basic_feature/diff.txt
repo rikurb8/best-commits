@@ -1,0 +1,81 @@
+diff --git a/src/auth.py b/src/auth.py
+new file mode 100644
+index 0000000..8f9d7a2
+--- /dev/null
++++ b/src/auth.py
+@@ -0,0 +1,42 @@
++"""User authentication module with JWT support."""
++
++import jwt
++from datetime import datetime, timedelta
++from typing import Optional
++
++SECRET_KEY = "your-secret-key"
++ALGORITHM = "HS256"
++ACCESS_TOKEN_EXPIRE_MINUTES = 30
++
++
++def create_access_token(user_id: str, expires_delta: Optional[timedelta] = None) -> str:
++    """Create a JWT access token for a user.
++
++    Args:
++        user_id: The user's unique identifier
++        expires_delta: Optional custom expiration time
++
++    Returns:
++        Encoded JWT token as a string
++    """
++    if expires_delta:
++        expire = datetime.utcnow() + expires_delta
++    else:
++        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
++
++    to_encode = {"sub": user_id, "exp": expire}
++    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
++    return encoded_jwt
++
++
++def verify_token(token: str) -> Optional[str]:
++    """Verify a JWT token and extract the user ID.
++
++    Args:
++        token: The JWT token to verify
++
++    Returns:
++        User ID if token is valid, None otherwise
++    """
++    try:
++        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
++        return payload.get("sub")
++    except jwt.PyJWTError:
++        return None
+diff --git a/tests/test_auth.py b/tests/test_auth.py
+new file mode 100644
+index 0000000..5c8b3e1
+--- /dev/null
++++ b/tests/test_auth.py
+@@ -0,0 +1,23 @@
++"""Tests for authentication module."""
++
++import pytest
++from src.auth import create_access_token, verify_token
++
++
++def test_create_access_token():
++    """Test that access token is created successfully."""
++    token = create_access_token("user123")
++    assert token is not None
++    assert isinstance(token, str)
++
++
++def test_verify_valid_token():
++    """Test verification of valid token."""
++    user_id = "user123"
++    token = create_access_token(user_id)
++    verified_id = verify_token(token)
++    assert verified_id == user_id
++
++
++def test_verify_invalid_token():
++    """Test verification of invalid token."""
++    assert verify_token("invalid.token.here") is None

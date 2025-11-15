@@ -1,0 +1,7 @@
+{
+  "gerrit_score_range": [-2, -1],
+  "keywords": ["SQL injection", "security", "parameterized", "vulnerability"],
+  "severity": ["critical", "high"],
+  "has_issues_section": true,
+  "description": "Should identify SQL injection vulnerability and recommend parameterized queries"
+}

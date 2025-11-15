@@ -1,0 +1,68 @@
+diff --git a/src/database.py b/src/database.py
+new file mode 100644
+index 0000000..a9f3c2e
+--- /dev/null
++++ b/src/database.py
+@@ -0,0 +1,28 @@
++"""Database service for user operations."""
++
++import sqlite3
++from typing import Optional, Dict
++
++
++class DatabaseService:
++    """Handles all database operations for users."""
++
++    def __init__(self, db_path: str):
++        self.db_path = db_path
++
++    def get_user(self, user_id: str) -> Optional[Dict]:
++        """Fetch user data from database."""
++        conn = sqlite3.connect(self.db_path)
++        cursor = conn.cursor()
++        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
++        row = cursor.fetchone()
++        conn.close()
++
++        if row:
++            return {
++                "id": row[0],
++                "name": row[1],
++                "email": row[2]
++            }
++        return None
+diff --git a/src/user_profile.py b/src/user_profile.py
+index 7e9b4d2..c4f8a9e 100644
+--- a/src/user_profile.py
++++ b/src/user_profile.py
+@@ -1,6 +1,6 @@
+ """User profile management."""
+
+-import sqlite3
++from .database import DatabaseService
+
+
+ def load_user_profile(user_id: str) -> dict:
+@@ -13,17 +13,8 @@ def load_user_profile(user_id: str) -> dict:
+     Returns:
+         Dictionary containing user profile data
+     """
+-    conn = sqlite3.connect("users.db")
+-    cursor = conn.cursor()
+-    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+-    row = cursor.fetchone()
+-    conn.close()
+-
+-    if row:
+-        user_data = {
+-            "id": row[0],
+-            "name": row[1],
+-            "email": row[2]
+-        }
++    db = DatabaseService("users.db")
++    user_data = db.get_user(user_id)
++
++    if user_data:
+         return user_data
+-    return {}
++    return {}

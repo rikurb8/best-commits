@@ -1,0 +1,41 @@
+diff --git a/src/report_generator.py b/src/report_generator.py
+new file mode 100644
+index 0000000..e7c3d9a
+--- /dev/null
++++ b/src/report_generator.py
+@@ -0,0 +1,35 @@
++"""Generate user activity reports."""
++
++import json
++from typing import Dict
++
++
++def generate_report(user_id: str) -> Dict:
++    """Generate activity report for a user."""
++    # Load user data
++    with open("users.json") as f:
++        users = json.load(f)
++
++    user = users[user_id]
++
++    # Load activity data
++    with open("activity.json") as f:
++        activities = json.load(f)
++
++    user_activities = [a for a in activities if a["user_id"] == user_id]
++
++    # Calculate statistics
++    total = len(user_activities)
++    recent = [a for a in user_activities if a["days_ago"] < 30]
++    active_days = len(set(a["date"] for a in user_activities))
++
++    report = {
++        "user_name": user["name"],
++        "total_activities": total,
++        "recent_activities": len(recent),
++        "active_days": active_days,
++        "average_per_day": total / active_days if active_days > 0 else 0,
++        "activity_rate": "high" if total > 100 else "medium" if total > 50 else "low"
++    }
++
++    return report

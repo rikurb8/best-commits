@@ -1,0 +1,7 @@
+{
+  "prefix": "fix:",
+  "keywords": ["null", "user", "profile"],
+  "max_summary_length": 50,
+  "imperative_mood": true,
+  "description": "Should mention fixing null/missing user data handling"
+}

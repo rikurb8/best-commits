@@ -1,0 +1,8 @@
+{
+  "gerrit_score_range": [0, 1],
+  "keywords": ["error handling", "exception", "magic number", "constant"],
+  "severity": ["medium", "low"],
+  "has_suggestions": true,
+  "balanced_tone": true,
+  "description": "Should identify quality issues (no error handling, magic numbers) with constructive suggestions"
+}

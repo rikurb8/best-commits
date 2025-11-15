@@ -5,9 +5,11 @@ Installable command-line scripts to make working with git easier.
 ## Available Scripts
 
 ### `review`
+
 AI-powered code review for uncommitted changes. Analyzes your code and provides feedback before you commit.
 
 **Features:**
+
 - Reviews both staged and unstaged changes
 - Provides summary of changes, potential issues, and improvement suggestions
 - Filters out noise (lock files, etc.) for cleaner reviews
@@ -16,9 +18,11 @@ AI-powered code review for uncommitted changes. Analyzes your code and provides 
 - Beautiful terminal output with markdown formatting
 
 ### `commit`
+
 AI-powered commit message generator using Claude API. Automatically analyzes your git changes and creates well-formatted, conventional commit messages.
 
 **Features:**
+
 - Analyzes staged and unstaged changes
 - Generates conventional commit messages (feat:, fix:, docs:, etc.)
 - Follows best practices (imperative mood, 50-char summary)
@@ -27,6 +31,7 @@ AI-powered commit message generator using Claude API. Automatically analyzes you
 ## Installation
 
 **Prerequisites:**
+
 - [uv](https://docs.astral.sh/uv/) - Fast Python package installer
 - API key for your chosen AI model (default: [Anthropic API key](https://console.anthropic.com))
 
@@ -100,6 +105,7 @@ cd best-commits
 To add a new script to this repo:
 
 1. **Create executable Python script** with uv-compatible shebang:
+
    ```python
    #!/usr/bin/env python3
    # /// script
@@ -110,11 +116,13 @@ To add a new script to this repo:
    ```
 
 2. **Make it executable:**
+
    ```bash
    chmod +x your-script.py
    ```
 
 3. **Test with uv:**
+
    ```bash
    uv run your-script.py
    ```
@@ -122,6 +130,7 @@ To add a new script to this repo:
 4. **Add installation instructions** to this README
 
 **Requirements:**
+
 - Must be runnable with `uv run`
 - Must include PEP 723 inline script metadata for dependencies
 - Should be a single-file executable
@@ -132,6 +141,7 @@ To add a new script to this repo:
 Both `review` and `commit` scripts support multiple AI models via LiteLLM:
 
 ### Default Model
+
 - **Model:** `claude-haiku-4-5-20251001` (Claude Haiku 4.5)
 - **Token limits:** 1024 for commit messages, 2048 for reviews
 
@@ -167,14 +177,14 @@ commit
 
 Different model providers require different API key environment variables:
 
-| Provider | Model Format | Example | Environment Variable |
-|----------|--------------|---------|---------------------|
-| Anthropic | `claude-*` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` or `GIT_API_KEY` (legacy) |
-| OpenAI | `gpt-*`, `o1-*` | `gpt-4`, `gpt-4o` | `OPENAI_API_KEY` |
-| xAI | `xai/*` | `xai/grok-beta` | `XAI_API_KEY` |
-| Google | `gemini/*` | `gemini/gemini-pro` | `GEMINI_API_KEY` |
-| Cohere | `cohere/*` or `command-*` | `cohere/command-r` | `COHERE_API_KEY` |
-| Mistral | `mistral/*` | `mistral/mistral-large` | `MISTRAL_API_KEY` |
+| Provider  | Model Format              | Example                     | Environment Variable                          |
+| --------- | ------------------------- | --------------------------- | --------------------------------------------- |
+| Anthropic | `claude-*`                | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` or `GIT_API_KEY` (legacy) |
+| OpenAI    | `gpt-*`, `o1-*`           | `gpt-4`, `gpt-4o`           | `OPENAI_API_KEY`                              |
+| xAI       | `xai/*`                   | `xai/grok-beta`             | `XAI_API_KEY`                                 |
+| Google    | `gemini/*`                | `gemini/gemini-pro`         | `GEMINI_API_KEY`                              |
+| Cohere    | `cohere/*` or `command-*` | `cohere/command-r`          | `COHERE_API_KEY`                              |
+| Mistral   | `mistral/*`               | `mistral/mistral-large`     | `MISTRAL_API_KEY`                             |
 
 **Important:** Some providers (xAI, Google, Cohere, Mistral) require a provider prefix in the model name (e.g., `xai/grok-beta` not just `grok-beta`). Anthropic and OpenAI models can be used without a prefix.
 
@@ -197,10 +207,17 @@ For a complete list of supported models and providers, see [LiteLLM documentatio
   - Add context from recent relevant commits
   - Support for custom review rules/checklist
   - Integration with linters and test frameworks
-  
 - Claude Code Integration
   - [ ] Add support for Claude Code integration
   - [ ] Document how to configure Claude Code credentials
+- Repository util
+  - Create new /utils/repo_utils/
+  - Initially connect with
+  - Supported commands:
+    - [ ] List PRs
+    - [ ] Fetch PR details (diff, comments)
+    - [ ] Add PR comment
+    - [ ] List Issues
 
 ## License
 

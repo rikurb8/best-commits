@@ -1,0 +1,7 @@
+{
+  "prefix": "refactor:",
+  "keywords": ["database", "service", "extract"],
+  "max_summary_length": 50,
+  "imperative_mood": true,
+  "description": "Should mention extracting database logic into a service"
+}

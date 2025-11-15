@@ -1,0 +1,42 @@
+diff --git a/src/api.py b/src/api.py
+index 2f8a3c1..9e7d4f2 100644
+--- a/src/api.py
++++ b/src/api.py
+@@ -1,14 +1,18 @@
+ """Public API for user management."""
+
+-from typing import Dict
++from typing import Dict, Optional
+
+
+-def create_user(name: str, email: str) -> Dict:
++def create_user(name: str, email: str, role: str = "user", metadata: Optional[Dict] = None) -> Dict:
+     """Create a new user.
+
+     Args:
+         name: User's full name
+         email: User's email address
++        role: User role (admin, user, guest)
++        metadata: Optional additional metadata
+
+     Returns:
+         Created user dictionary with ID
+@@ -16,6 +20,8 @@ def create_user(name: str, email: str) -> Dict:
+     user = {
+         "name": name,
+         "email": email,
++        "role": role,
++        "metadata": metadata or {},
+         "id": generate_id()
+     }
+     save_user(user)
+diff --git a/src/internal.py b/src/internal.py
+index 4a8e7f3..7c9f8d2 100644
+--- a/src/internal.py
++++ b/src/internal.py
+@@ -5,4 +5,4 @@ from .api import create_user
+
+ def import_users(users_data: list):
+     for user in users_data:
+-        create_user(user["name"], user["email"])
++        create_user(user["name"], user["email"], user.get("role", "user"), user.get("metadata"))

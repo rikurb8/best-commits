@@ -1,0 +1,7 @@
+{
+  "gerrit_score_range": [-1, 1],
+  "keywords": ["breaking", "API", "signature", "compatibility", "backward"],
+  "has_breaking_changes_section": true,
+  "mentions_mitigation": true,
+  "description": "Should identify that function signature changed and discuss API compatibility"
+}

@@ -123,6 +123,10 @@ Both `review` and `commit` scripts use Claude Haiku 4.5:
   - Add context from recent relevant commits
   - Support for custom review rules/checklist
   - Integration with linters and test frameworks
+  
+- Claude Code Integration
+  - [ ] Add support for Claude Code integration
+  - [ ] Document how to configure Claude Code credentials
 
 ## License
 

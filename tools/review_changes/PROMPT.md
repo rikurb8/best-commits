@@ -48,7 +48,30 @@ Prioritize feedback on:
 
 Provide your review in **markdown** format with these sections:
 
-### 1. Summary of Changes
+### 1. Gerrit Score
+
+Provide a Gerrit-style code review score based on the assessment:
+
+| Score  | Label                                           | Meaning                                 |
+| ------ | ----------------------------------------------- | --------------------------------------- |
+| **+2** | Looks good to me, approved                      | Strong approval, code is ready to merge |
+| **+1** | Looks good to me, but someone else must approve | Conditional approval                    |
+| **0**  | No score                                        | Neutral/comments only                   |
+| **-1** | I would prefer this is not merged as is         | Request for changes                     |
+| **-2** | This shall not be merged                        | Strong veto                             |
+
+**Your Score**: `[+2 | +1 | 0 | -1 | -2]`
+
+**Rationale**: Brief explanation of why this score was assigned.
+
+Use these guidelines when scoring:
+- **+2**: Code is well-written, tested, follows standards, and solves the problem correctly. No issues found.
+- **+1**: Code looks good but minor concerns exist that don't block merging, or you're providing feedback but not final approval.
+- **0**: Providing feedback, asking questions, or suggesting improvements without blocking.
+- **-1**: Issues found that should be addressed: bugs, code quality problems, missing tests, unclear logic, or style violations.
+- **-2**: Critical issues: security vulnerabilities, breaking changes, fundamental design flaws, or violates project principles.
+
+### 2. Summary of Changes
 
 Provide a high-level bulleted list of what changed. Use sub-bullets (max 3 levels) for details:
 
@@ -65,7 +88,7 @@ Keep it concise - focus on **what** changed at a high level, with supporting det
 
 It is REALLY IMPORTANT to follow this formatting. Must be list even if 1 thing changed.
 
-### 2. Correctness Assessment
+### 3. Correctness Assessment
 
 Evaluate whether the code works as expected:
 
@@ -74,7 +97,7 @@ Evaluate whether the code works as expected:
 - Are there potential runtime errors or bugs?
 - Does it achieve the intended functionality?
 
-### 3. Code Quality Assessment
+### 4. Code Quality Assessment
 
 Evaluate code quality and best practices:
 
@@ -84,7 +107,7 @@ Evaluate code quality and best practices:
 - Are there code smells or anti-patterns?
 - Would linter/formatter pass (if you can tell from the diff)?
 
-### 4. Documentation Review
+### 5. Documentation Review
 
 Check if documentation reflects the changes:
 
@@ -93,7 +116,7 @@ Check if documentation reflects the changes:
 - Are README or other docs updated if public APIs changed?
 - Are breaking changes documented?
 
-### 5. Testing Assessment
+### 6. Testing Assessment
 
 Evaluate test coverage and quality:
 
@@ -103,7 +126,7 @@ Evaluate test coverage and quality:
 - Do existing tests need updates?
 - Any indication whether tests pass (if test files are in the diff)?
 
-### 6. Issues and Suggestions
+### 7. Issues and Suggestions
 
 List any problems or improvements:
 
@@ -121,7 +144,7 @@ Use this format:
 
 If no issues found, write: "No significant issues detected."
 
-### 7. Positive Highlights (Optional)
+### 8. Positive Highlights (Optional)
 
 If the code demonstrates particularly good practices, acknowledge them:
 
@@ -133,6 +156,12 @@ If the code demonstrates particularly good practices, acknowledge them:
 ## Example Output
 
 ```markdown
+## Gerrit Score
+
+**Your Score**: `-1` (I would prefer this is not merged as is)
+
+**Rationale**: The code introduces important authentication functionality with good security practices (bcrypt hashing), but has a critical missing feature (token expiration) that could allow indefinite access, and contains a breaking API change that needs documentation. These issues should be addressed before merging.
+
 ## Summary of Changes
 
 - Added user authentication system

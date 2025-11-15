@@ -3,6 +3,7 @@
 import os
 import sys
 import subprocess
+from pathlib import Path
 from typing import Dict
 
 from litellm import completion
@@ -11,6 +12,25 @@ from rich.panel import Panel
 from rich.text import Text
 
 console = Console()
+
+
+def load_prompt_template() -> str:
+    """Load the prompt template from PROMPT.md file."""
+    prompt_file = Path(__file__).parent / "PROMPT.md"
+    try:
+        return prompt_file.read_text()
+    except FileNotFoundError:
+        # Fallback to embedded prompt if file not found
+        return """You are a git commit message generator. Analyze the following git changes and create a clear, informative commit message.
+
+Rules for the commit message:
+1. First line: Brief summary (50 chars or less) in imperative mood (e.g., "Add feature" not "Added feature")
+2. If needed, add a blank line then a detailed description
+3. Focus on WHAT changed and WHY, not HOW
+4. Be concise but informative
+5. Use conventional commit prefixes if appropriate (feat:, fix:, docs:, refactor:, test:, chore:)
+
+Return ONLY the commit message text, nothing else. Do not include any explanations or markdown formatting."""
 
 
 def get_model_name() -> str:
@@ -64,25 +84,24 @@ def generate_commit_message(changes: Dict[str, str]) -> str:
     """Call AI API to generate commit message."""
     model = get_model_name()
 
-    prompt = f"""You are a git commit message generator. Analyze the following git changes and create a clear, informative commit message.
+    # Load the prompt template
+    prompt_template = load_prompt_template()
 
-Git Status:
+    # Build the full prompt with git changes
+    prompt = f"""{prompt_template}
+
+---
+
+## Git Changes to Analyze
+
+**Git Status:**
 {changes['status']}
 
-Staged Changes:
+**Staged Changes:**
 {changes['staged_diff'] or '(no staged changes)'}
 
-Unstaged Changes:
-{changes['diff'] or '(no unstaged changes)'}
-
-Rules for the commit message:
-1. First line: Brief summary (50 chars or less) in imperative mood (e.g., "Add feature" not "Added feature")
-2. If needed, add a blank line then a detailed description
-3. Focus on WHAT changed and WHY, not HOW
-4. Be concise but informative
-5. Use conventional commit prefixes if appropriate (feat:, fix:, docs:, refactor:, test:, chore:)
-
-Return ONLY the commit message text, nothing else. Do not include any explanations or markdown formatting."""
+**Unstaged Changes:**
+{changes['diff'] or '(no unstaged changes)'}"""
 
     try:
         response = completion(

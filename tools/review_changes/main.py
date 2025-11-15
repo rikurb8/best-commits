@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import Dict
 
 from litellm import completion
@@ -11,6 +12,27 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 
 console = Console()
+
+
+def load_prompt_template() -> str:
+    """Load the prompt template from PROMPT.md file."""
+    prompt_file = Path(__file__).parent / "PROMPT.md"
+    try:
+        return prompt_file.read_text()
+    except FileNotFoundError:
+        # Fallback to embedded prompt if file not found
+        return """You are an expert code reviewer. Analyze the following git changes and provide constructive feedback.
+
+Please provide a code review with the following sections:
+
+1. **Summary**: Brief overview of what changed (1-2 sentences)
+2. **Potential Issues**: Any bugs, security concerns, or problems you notice
+3. **Suggestions**: Code quality improvements, missing tests, refactoring opportunities
+4. **Breaking Changes**: Any changes that might break existing functionality
+
+Be concise but thorough. Focus on actionable feedback. If everything looks good, say so!
+
+Format your response in markdown."""
 
 
 def get_model_name() -> str:
@@ -99,27 +121,24 @@ def review_changes(changes: Dict[str, str]) -> str:
     filtered_staged = filter_diff_content(changes["staged_diff"])
     filtered_unstaged = filter_diff_content(changes["diff"])
 
-    prompt = f"""You are an expert code reviewer. Analyze the following git changes and provide constructive feedback.
+    # Load the prompt template
+    prompt_template = load_prompt_template()
 
-Git Status:
+    # Build the full prompt with git changes
+    prompt = f"""{prompt_template}
+
+---
+
+## Git Changes to Review
+
+**Git Status:**
 {changes["status"]}
 
-Staged Changes:
+**Staged Changes:**
 {filtered_staged or "(no staged changes)"}
 
-Unstaged Changes:
-{filtered_unstaged or "(no unstaged changes)"}
-
-Please provide a code review with the following sections:
-
-1. **Summary**: Brief overview of what changed (1-2 sentences)
-2. **Potential Issues**: Any bugs, security concerns, or problems you notice
-3. **Suggestions**: Code quality improvements, missing tests, refactoring opportunities
-4. **Breaking Changes**: Any changes that might break existing functionality
-
-Be concise but thorough. Focus on actionable feedback. If everything looks good, say so!
-
-Format your response in markdown."""
+**Unstaged Changes:**
+{filtered_unstaged or "(no unstaged changes)"}"""
 
     try:
         response = completion(

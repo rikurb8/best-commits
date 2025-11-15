@@ -1,28 +1,29 @@
-#!/usr/bin/env -S uvx --quiet --with anthropic --with rich
+#!/usr/bin/env -S uvx --quiet --with litellm --with rich
 # /// script
 # dependencies = [
-#   "anthropic>=0.40.0",
+#   "litellm>=1.0.0",
 #   "rich>=13.0.0",
 # ]
 # ///
 
 """
-Automated Git Commit Generator using Claude API
+Automated Git Commit Generator using AI
 
 This script:
 1. Analyzes current uncommitted git changes
-2. Sends the diff to Claude API (Haiku 4.5)
+2. Sends the diff to an AI model (default: Claude Haiku 4.5)
 3. Generates an informative commit message
 4. Creates the git commit
 
 Prerequisites:
 - Git repository with changes
-- GIT_API_KEY environment variable set with Anthropic API key
+- API key for your chosen model (see documentation for provider-specific keys)
+- Optional: BETTER_COMMIT_MODEL environment variable to specify model
 
 Usage:
   ./commit-changes.py
-  # or with env var inline:
-  GIT_API_KEY=your_key ./commit-changes.py
+  # or with custom model:
+  BETTER_COMMIT_MODEL=gpt-4 OPENAI_API_KEY=your_key ./commit-changes.py
   # or with uvx:
   uvx commit-changes.py
 """
@@ -31,12 +32,25 @@ import os
 import sys
 import subprocess
 from typing import Dict, Optional
-from anthropic import Anthropic
+from litellm import completion
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 console = Console()
+
+
+def get_model_name() -> str:
+    """Get the AI model to use from environment variable or default."""
+    return os.getenv("BETTER_COMMIT_MODEL", "claude-haiku-4-5-20251001")
+
+
+def setup_api_keys() -> None:
+    """Setup API keys for backward compatibility with GIT_API_KEY."""
+    # For backwards compatibility, if GIT_API_KEY is set and ANTHROPIC_API_KEY is not,
+    # use GIT_API_KEY as ANTHROPIC_API_KEY
+    if os.getenv("GIT_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"):
+        os.environ["ANTHROPIC_API_KEY"] = os.environ["GIT_API_KEY"]
 
 
 def run_git_command(*args: str) -> str:
@@ -74,11 +88,8 @@ def get_git_changes() -> Dict[str, str]:
 
 
 def generate_commit_message(changes: Dict[str, str]) -> str:
-    """Call Claude API to generate commit message."""
-    api_key = os.getenv("GIT_API_KEY")
-
-    if not api_key:
-        raise ValueError("GIT_API_KEY environment variable is not set")
+    """Call AI API to generate commit message."""
+    model = get_model_name()
 
     prompt = f"""You are a git commit message generator. Analyze the following git changes and create a clear, informative commit message.
 
@@ -100,30 +111,37 @@ Rules for the commit message:
 
 Return ONLY the commit message text, nothing else. Do not include any explanations or markdown formatting."""
 
-    client = Anthropic(api_key=api_key)
+    try:
+        response = completion(
+            model=model,
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
 
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+        if response.choices and len(response.choices) > 0:
+            message = response.choices[0].message.content.strip()
 
-    if response.content and len(response.content) > 0:
-        message = response.content[0].text.strip()
+            # Strip markdown code fences if present
+            import re
+            message = re.sub(r'^```[a-z]*\n?', '', message, flags=re.IGNORECASE)
+            message = re.sub(r'\n?```$', '', message, flags=re.IGNORECASE)
 
-        # Strip markdown code fences if present
-        import re
-        message = re.sub(r'^```[a-z]*\n?', '', message, flags=re.IGNORECASE)
-        message = re.sub(r'\n?```$', '', message, flags=re.IGNORECASE)
-
-        return message.strip()
-    else:
-        raise ValueError("No content in Claude API response")
+            return message.strip()
+        else:
+            raise ValueError("No content in AI API response")
+    except Exception as e:
+        # Provide helpful error message for missing API keys
+        error_msg = str(e)
+        if "api key" in error_msg.lower() or "authentication" in error_msg.lower():
+            console.print(f"[red]API authentication failed for model '{model}'[/red]")
+            console.print("[yellow]Make sure you have set the appropriate API key environment variable.[/yellow]")
+            console.print("[yellow]See documentation for required credentials for your model.[/yellow]")
+        raise
 
 
 def stage_all_changes() -> None:
@@ -141,6 +159,9 @@ def create_commit(message: str) -> None:
 def main() -> None:
     """Main execution function."""
     try:
+        # Setup API keys for backwards compatibility
+        setup_api_keys()
+
         console.print("[cyan]🔍 Checking for uncommitted changes...[/cyan]\n")
 
         if not has_uncommitted_changes():
@@ -161,7 +182,8 @@ def main() -> None:
             changes["staged_diff"] = staged_diff
             changes["diff"] = ""
 
-        console.print("[cyan]🤖 Generating commit message with Claude API...[/cyan]\n")
+        model = get_model_name()
+        console.print(f"[cyan]🤖 Generating commit message with {model}...[/cyan]\n")
 
         commit_message = generate_commit_message(changes)
 

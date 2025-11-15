@@ -1,28 +1,29 @@
-#!/usr/bin/env -S uvx --quiet --with anthropic --with rich
+#!/usr/bin/env -S uvx --quiet --with litellm --with rich
 # /// script
 # dependencies = [
-#   "anthropic>=0.40.0",
+#   "litellm>=1.0.0",
 #   "rich>=13.0.0",
 # ]
 # ///
 
 """
-AI-Powered Git Changes Review using Claude API
+AI-Powered Git Changes Review
 
 This script:
 1. Analyzes current uncommitted git changes
-2. Sends the diff to Claude API (Haiku 4.5) for code review
+2. Sends the diff to an AI model (default: Claude Haiku 4.5) for code review
 3. Displays summary, potential issues, and improvement suggestions
 4. Optionally proceeds to commit with message generation
 
 Prerequisites:
 - Git repository with changes
-- GIT_API_KEY environment variable set with Anthropic API key
+- API key for your chosen model (see documentation for provider-specific keys)
+- Optional: BETTER_COMMIT_MODEL environment variable to specify model
 
 Usage:
   ./review-changes.py
-  # or with env var inline:
-  GIT_API_KEY=your_key ./review-changes.py
+  # or with custom model:
+  BETTER_COMMIT_MODEL=gpt-4 OPENAI_API_KEY=your_key ./review-changes.py
   # or with uvx:
   uvx review-changes.py
 """
@@ -32,12 +33,25 @@ import subprocess
 import sys
 from typing import Dict
 
-from anthropic import Anthropic
+from litellm import completion
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 
 console = Console()
+
+
+def get_model_name() -> str:
+    """Get the AI model to use from environment variable or default."""
+    return os.getenv("BETTER_COMMIT_MODEL", "claude-haiku-4-5-20251001")
+
+
+def setup_api_keys() -> None:
+    """Setup API keys for backward compatibility with GIT_API_KEY."""
+    # For backwards compatibility, if GIT_API_KEY is set and ANTHROPIC_API_KEY is not,
+    # use GIT_API_KEY as ANTHROPIC_API_KEY
+    if os.getenv("GIT_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"):
+        os.environ["ANTHROPIC_API_KEY"] = os.environ["GIT_API_KEY"]
 
 
 def run_git_command(*args: str) -> str:
@@ -106,11 +120,8 @@ def filter_diff_content(diff: str) -> str:
 
 
 def review_changes(changes: Dict[str, str]) -> str:
-    """Call Claude API to review code changes."""
-    api_key = os.getenv("GIT_API_KEY")
-
-    if not api_key:
-        raise ValueError("GIT_API_KEY environment variable is not set")
+    """Call AI API to review code changes."""
+    model = get_model_name()
 
     # Filter out lock files and other unnecessary changes
     filtered_staged = filter_diff_content(changes["staged_diff"])
@@ -138,18 +149,25 @@ Be concise but thorough. Focus on actionable feedback. If everything looks good,
 
 Format your response in markdown."""
 
-    client = Anthropic(api_key=api_key)
+    try:
+        response = completion(
+            model=model,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
 
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=2048,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    if response.content and len(response.content) > 0:
-        return response.content[0].text.strip()
-    else:
-        raise ValueError("No content in Claude API response")
+        if response.choices and len(response.choices) > 0:
+            return response.choices[0].message.content.strip()
+        else:
+            raise ValueError("No content in AI API response")
+    except Exception as e:
+        # Provide helpful error message for missing API keys
+        error_msg = str(e)
+        if "api key" in error_msg.lower() or "authentication" in error_msg.lower():
+            console.print(f"[red]API authentication failed for model '{model}'[/red]")
+            console.print("[yellow]Make sure you have set the appropriate API key environment variable.[/yellow]")
+            console.print("[yellow]See documentation for required credentials for your model.[/yellow]")
+        raise
 
 
 def prompt_user_to_commit() -> bool:
@@ -188,6 +206,9 @@ def run_commit_script() -> None:
 def main() -> None:
     """Main execution function."""
     try:
+        # Setup API keys for backwards compatibility
+        setup_api_keys()
+
         console.print("[cyan]🔍 Checking for uncommitted changes...[/cyan]\n")
 
         if not has_uncommitted_changes():
@@ -202,7 +223,8 @@ def main() -> None:
         console.print(Panel(changes["status"], title="Git Status", border_style="cyan"))
         console.print()
 
-        console.print("[cyan]🤖 Analyzing changes with Claude API...[/cyan]\n")
+        model = get_model_name()
+        console.print(f"[cyan]🤖 Analyzing changes with {model}...[/cyan]\n")
 
         review_feedback = review_changes(changes)
 

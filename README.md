@@ -28,7 +28,7 @@ AI-powered commit message generator using Claude API. Automatically analyzes you
 
 **Prerequisites:**
 - [uv](https://docs.astral.sh/uv/) - Fast Python package installer
-- [Anthropic API key](https://console.anthropic.com) - Set as `GIT_API_KEY` env variable
+- API key for your chosen AI model (default: [Anthropic API key](https://console.anthropic.com))
 
 **Install globally:**
 
@@ -55,7 +55,12 @@ EOF
 chmod +x ~/.local/bin/commit
 
 # Set API key (add to ~/.bashrc or ~/.zshrc for persistence)
+# For Anthropic Claude (default):
+export ANTHROPIC_API_KEY=your_anthropic_api_key
+# OR use legacy variable name:
 export GIT_API_KEY=your_anthropic_api_key
+
+# For other models, see "API Key Configuration" section below
 ```
 
 **Usage:**
@@ -104,16 +109,57 @@ To add a new script to this repo:
 
 ## API Usage
 
-Both `review` and `commit` scripts use Claude Haiku 4.5:
-- **Model:** `claude-haiku-4-5-20251001`
+Both `review` and `commit` scripts support multiple AI models via LiteLLM:
+
+### Default Model
+- **Model:** `claude-haiku-4-5-20251001` (Claude Haiku 4.5)
 - **Token limits:** 1024 for commit messages, 2048 for reviews
+
+### Choosing a Different Model
+
+Set the `BETTER_COMMIT_MODEL` environment variable to use a different model:
+
+```bash
+# Use OpenAI GPT-4
+export BETTER_COMMIT_MODEL=gpt-4
+export OPENAI_API_KEY=your_openai_key
+
+# Use Anthropic Claude Opus
+export BETTER_COMMIT_MODEL=claude-opus-4-20250514
+export ANTHROPIC_API_KEY=your_anthropic_key
+
+# Use xAI Grok
+export BETTER_COMMIT_MODEL=grok-beta
+export XAI_API_KEY=your_xai_key
+
+# Then use the commands as normal
+review
+commit
+```
+
+### API Key Configuration
+
+Different model providers require different API key environment variables:
+
+| Provider | Models | Environment Variable |
+|----------|--------|---------------------|
+| Anthropic | `claude-*` | `ANTHROPIC_API_KEY` or `GIT_API_KEY` (legacy) |
+| OpenAI | `gpt-*`, `o1-*` | `OPENAI_API_KEY` |
+| xAI | `grok-*` | `XAI_API_KEY` |
+| Google | `gemini-*` | `GEMINI_API_KEY` |
+| Cohere | `command-*` | `COHERE_API_KEY` |
+| Mistral | `mistral-*` | `MISTRAL_API_KEY` |
+
+For a complete list of supported models and providers, see [LiteLLM documentation](https://docs.litellm.ai/docs/providers).
+
+**Note:** For backwards compatibility, `GIT_API_KEY` is still supported for Anthropic models.
 
 ## Future Plans
 
 - Support for more AI models
-  - [ ] Setup LiteLLM 
-  - [ ] use BETTER_COMMIT_MODEL env variable to specify model, document how to use it
-  - [ ] Document how to configure credentials for different models (""OPENAI_API_KEY", "XAI_API_KEY", etc)
+  - [x] Setup LiteLLM
+  - [x] use BETTER_COMMIT_MODEL env variable to specify model, document how to use it
+  - [x] Document how to configure credentials for different models ("OPENAI_API_KEY", "XAI_API_KEY", etc)
 
 - Improve commit message quality
   - More specific on what to include in commit messages

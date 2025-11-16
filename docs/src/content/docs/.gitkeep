@@ -1,0 +1,2 @@
+# This file keeps the docs directory in git
+# Actual documentation is synced via sync-docs.mjs

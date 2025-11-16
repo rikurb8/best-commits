@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.astro/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Synced content (generated from parent directory)
+# These are synced via sync-docs.mjs and shouldn't be committed
+src/content/docs/index.mdx
+src/content/docs/evals/*.md
+src/content/docs/tools/*-prompt.md
+src/content/docs/tools/scoring.md
+src/content/docs/development/claude.md
+src/content/docs/development/prompt-improvements.md
+src/content/docs/development/specs-*.md
+
+# Cache
+.cache/

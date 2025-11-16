@@ -1,5 +1,7 @@
 #!/bin/bash
 # Install best-commits tools using uv tool install
+#
+# Each tool is installed independently from its subdirectory.
 
 set -e
 
@@ -14,8 +16,10 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+TOOLS=("commit" "review")
+
 print_usage() {
-    echo "Usage: $0 [OPTIONS]"
+    echo "Usage: $0 [OPTIONS] [TOOL]"
     echo ""
     echo "Install best-commits tools using uv tool install"
     echo ""
@@ -24,10 +28,18 @@ print_usage() {
     echo "  -u, --uninstall   Uninstall the tools"
     echo "  -h, --help        Show this help message"
     echo ""
+    echo "Tools:"
+    echo "  commit            Install only commit tool"
+    echo "  review            Install only review tool"
+    echo "  all               Install all tools (default)"
+    echo ""
     echo "Examples:"
-    echo "  $0                # Install normally"
-    echo "  $0 --editable     # Install in editable mode"
-    echo "  $0 --uninstall    # Uninstall"
+    echo "  $0                # Install all tools"
+    echo "  $0 commit         # Install only commit tool"
+    echo "  $0 --editable     # Install all tools in editable mode"
+    echo "  $0 -e commit      # Install commit tool in editable mode"
+    echo "  $0 --uninstall    # Uninstall all tools"
+    echo "  $0 -u review      # Uninstall only review tool"
 }
 
 check_uv() {
@@ -43,64 +55,136 @@ check_uv() {
     fi
 }
 
-install_tools() {
+get_tool_dir() {
+    local tool_name=$1
+    case "$tool_name" in
+        commit)
+            echo "commit_changes"
+            ;;
+        review)
+            echo "review_changes"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+get_package_name() {
+    local tool_name=$1
+    case "$tool_name" in
+        commit)
+            echo "best-commits-commit"
+            ;;
+        review)
+            echo "best-commits-review"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+install_tool() {
+    local tool_name=$1
+    local editable=$2
+    local tool_dir=$(get_tool_dir "$tool_name")
+    local package_name=$(get_package_name "$tool_name")
+
+    if [ -z "$tool_dir" ]; then
+        echo -e "${RED}Error: Unknown tool '$tool_name'${NC}"
+        return 1
+    fi
+
+    local tool_path="$PROJECT_ROOT/tools/$tool_dir"
+
+    if [ ! -d "$tool_path" ]; then
+        echo -e "${RED}Error: Tool directory not found: $tool_path${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Installing $tool_name...${NC}"
+
+    if [ "$editable" = true ]; then
+        uv tool install --editable "$tool_path"
+    else
+        uv tool install "$tool_path"
+    fi
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Successfully installed '$tool_name'${NC}"
+    else
+        echo -e "${RED}✗ Failed to install '$tool_name'${NC}"
+        return 1
+    fi
+}
+
+uninstall_tool() {
+    local tool_name=$1
+    local package_name=$(get_package_name "$tool_name")
+
+    if [ -z "$package_name" ]; then
+        echo -e "${RED}Error: Unknown tool '$tool_name'${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Uninstalling $tool_name...${NC}"
+
+    uv tool uninstall "$package_name" 2>/dev/null
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Successfully uninstalled '$tool_name'${NC}"
+    else
+        echo -e "${YELLOW}! Tool '$tool_name' was not installed${NC}"
+    fi
+}
+
+install_all_tools() {
     local editable=$1
+    local failed=0
 
     echo -e "${CYAN}=== Installing Best Commits Tools ===${NC}"
     echo ""
 
-    cd "$PROJECT_ROOT"
-
-    if [ "$editable" = true ]; then
-        echo -e "${CYAN}Installing in editable mode (for development)...${NC}"
+    for tool in "${TOOLS[@]}"; do
+        install_tool "$tool" "$editable"
+        if [ $? -ne 0 ]; then
+            failed=1
+        fi
         echo ""
-        uv tool install --editable .
-    else
-        echo -e "${CYAN}Installing...${NC}"
-        echo ""
-        uv tool install .
-    fi
+    done
 
-    local exit_code=$?
-
-    if [ $exit_code -eq 0 ]; then
-        echo ""
-        echo -e "${GREEN}✓ Installation complete!${NC}"
+    if [ $failed -eq 0 ]; then
+        echo -e "${GREEN}✓ All tools installed successfully!${NC}"
         echo ""
         echo "Commands available:"
         echo "  commit    # Generate AI-powered commit messages"
         echo "  review    # Get AI code review feedback"
         echo ""
         echo "Update tools:"
-        echo "  uv tool upgrade best-commits"
+        echo "  uv tool upgrade best-commits-commit"
+        echo "  uv tool upgrade best-commits-review"
         echo ""
         echo "View installed tools:"
         echo "  uv tool list"
         echo ""
     else
-        echo ""
-        echo -e "${RED}✗ Installation failed${NC}"
-        exit $exit_code
+        echo -e "${RED}✗ Some tools failed to install${NC}"
+        exit 1
     fi
 }
 
-uninstall_tools() {
+uninstall_all_tools() {
     echo -e "${CYAN}=== Uninstalling Best Commits Tools ===${NC}"
     echo ""
 
-    uv tool uninstall best-commits
+    for tool in "${TOOLS[@]}"; do
+        uninstall_tool "$tool"
+    done
 
-    local exit_code=$?
-
-    if [ $exit_code -eq 0 ]; then
-        echo ""
-        echo -e "${GREEN}✓ Uninstallation complete!${NC}"
-        echo ""
-    else
-        echo ""
-        echo -e "${RED}✗ Uninstallation failed or package not found${NC}"
-        exit $exit_code
-    fi
+    echo ""
+    echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+    echo ""
 }
 
 main() {
@@ -108,6 +192,7 @@ main() {
 
     local editable=false
     local uninstall=false
+    local tool=""
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do
@@ -124,6 +209,10 @@ main() {
                 print_usage
                 exit 0
                 ;;
+            commit|review|all)
+                tool=$1
+                shift
+                ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
                 echo ""
@@ -133,10 +222,34 @@ main() {
         esac
     done
 
+    # Default to all tools if not specified
+    if [ -z "$tool" ]; then
+        tool="all"
+    fi
+
     if [ "$uninstall" = true ]; then
-        uninstall_tools
+        if [ "$tool" = "all" ]; then
+            uninstall_all_tools
+        else
+            echo -e "${CYAN}=== Uninstalling Best Commits Tools ===${NC}"
+            echo ""
+            uninstall_tool "$tool"
+            echo ""
+            echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+        fi
     else
-        install_tools $editable
+        if [ "$tool" = "all" ]; then
+            install_all_tools $editable
+        else
+            echo -e "${CYAN}=== Installing Best Commits Tools ===${NC}"
+            echo ""
+            install_tool "$tool" $editable
+            echo ""
+            echo -e "${GREEN}✓ Installation complete!${NC}"
+            echo ""
+            echo "Command available: $tool"
+            echo ""
+        fi
     fi
 }
 

@@ -1,0 +1,43 @@
+[project]
+name = "best-commits-review"
+version = "0.2.0"
+description = "AI-powered Git code review tool"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "best-commits contributors" }
+]
+keywords = ["git", "code-review", "ai", "automation", "llm", "developer-tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "litellm>=1.0.0",
+    "rich>=13.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/rikurb8/best-commits"
+Repository = "https://github.com/rikurb8/best-commits"
+Issues = "https://github.com/rikurb8/best-commits/issues"
+
+[project.scripts]
+review = "review_changes:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["review_changes"]
+
+[tool.setuptools.package-data]
+"review_changes" = ["*.md"]

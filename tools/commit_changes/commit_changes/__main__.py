@@ -3,20 +3,20 @@
 Automated Git Commit Generator using AI
 
 Entry point for the commit command. This script delegates to the main
-implementation in tools.commit_changes.main module.
+implementation in commit_changes.main module.
 
 The package must be installed to use this command. Install with:
-  uv tool install .
+  uv tool install ./tools/commit_changes
   # or
-  uv tool install git+https://github.com/rikurb8/best-commits.git
+  uv tool install git+https://github.com/rikurb8/best-commits.git#subdirectory=tools/commit_changes
 
 For development without installation, use:
-  uvx --from . commit
+  uvx --from ./tools/commit_changes commit
   # or
-  uv run -m tools.commit_changes
+  uv run -m commit_changes
 """
 
-from tools.commit_changes import main
+from commit_changes import main
 
 if __name__ == "__main__":
     main()

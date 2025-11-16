@@ -3,20 +3,20 @@
 AI-Powered Git Changes Review
 
 Entry point for the review command. This script delegates to the main
-implementation in tools.review_changes.main module.
+implementation in review_changes.main module.
 
 The package must be installed to use this command. Install with:
-  uv tool install .
+  uv tool install ./tools/review_changes
   # or
-  uv tool install git+https://github.com/rikurb8/best-commits.git
+  uv tool install git+https://github.com/rikurb8/best-commits.git#subdirectory=tools/review_changes
 
 For development without installation, use:
-  uvx --from . review
+  uvx --from ./tools/review_changes review
   # or
-  uv run -m tools.review_changes
+  uv run -m review_changes
 """
 
-from tools.review_changes import main
+from review_changes import main
 
 if __name__ == "__main__":
     main()

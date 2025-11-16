@@ -8,17 +8,17 @@ Automated evaluation system for AI-powered Git tools using [DeepEval](https://do
 # Install dependencies
 cd evals && uv pip install -e .
 
-# Run all evaluations
-pytest
+# Run all evaluations (recommended - uses DeepEval CLI)
+deepeval test run
 
-# Run commit message evaluations only
-pytest commit_changes/test_commit_eval.py -v
+# Run specific test file
+deepeval test run commit_changes/test_commit_eval.py
 
-# Run code review evaluations only
-pytest review_changes/test_review_eval.py -v
+# Run with parallel execution (faster)
+deepeval test run -n 4
 
-# Run a specific test case
-pytest commit_changes/test_commit_eval.py::test_commit_message_generation[basic_feature] -v
+# Alternative: direct pytest (also works)
+pytest -v
 ```
 
 ## Structure
@@ -49,52 +49,80 @@ evals/
 
 This evaluation suite has been migrated from a custom evaluation system to DeepEval, providing:
 
-- **Standard Testing Framework**: Uses pytest for test discovery and execution
+- **Standard Testing Framework**: Uses DeepEval CLI (built on pytest) for test execution
 - **Built-in Metrics**: Leverages DeepEval's GEval metric for LLM-based evaluation
+- **Parallel Execution**: Run tests faster with `-n` flag for parallel processing
+- **Cloud Reporting**: Optional integration with Confident AI platform for dashboards
 - **Better Reporting**: Integrated test results and detailed failure analysis
 - **Easier Extension**: Simple to add new test cases and metrics
 
+### Why DeepEval CLI?
+
+Use `deepeval test run` instead of direct `pytest` command:
+- Better integration with DeepEval's ecosystem
+- Native support for LLM-specific test features
+- Optional cloud reporting and dashboards
+- Optimized for parallel LLM evaluation workloads
+
+Direct `pytest` still works but `deepeval test run` is recommended.
+
 ### Legacy Scripts
 
-The old `run_eval.py` scripts and SQLite storage are deprecated but kept for backwards compatibility. Use the new pytest-based tests instead.
+The old `run_eval.py` scripts and SQLite storage are deprecated but kept for backwards compatibility. Use the new DeepEval-based tests instead.
 
 ## Usage Examples
 
-### Run All Tests
+### Run All Tests (Recommended)
 ```bash
 cd evals
-pytest -v
+deepeval test run
 ```
 
-### Run Specific Tool Tests
+### Run Specific Test File
 ```bash
 # Commit message tests
-pytest commit_changes/ -v
+deepeval test run commit_changes/test_commit_eval.py
 
 # Code review tests
-pytest review_changes/ -v
+deepeval test run review_changes/test_review_eval.py
 ```
 
 ### Run Specific Test Case
 ```bash
-pytest commit_changes/test_commit_eval.py::test_commit_message_generation[basic_feature] -v
-pytest review_changes/test_review_eval.py::test_code_review_generation[security_issue] -v
+deepeval test run commit_changes/test_commit_eval.py::test_commit_message_generation[basic_feature]
+deepeval test run review_changes/test_review_eval.py::test_code_review_generation[security_issue]
 ```
 
 ### Test Different Models
 ```bash
 # Set model via environment variable
-BETTER_COMMIT_MODEL=gpt-4o pytest commit_changes/ -v
-BETTER_COMMIT_MODEL=claude-sonnet-4-20250514 pytest commit_changes/ -v
+BETTER_COMMIT_MODEL=gpt-4o deepeval test run commit_changes/test_commit_eval.py
+BETTER_COMMIT_MODEL=claude-sonnet-4-20250514 deepeval test run
 ```
 
-### Generate Test Report
+### Parallel Execution (Faster)
 ```bash
-# Generate HTML report
-pytest --html=report.html --self-contained-html
+# Run all tests with 4 parallel processes
+deepeval test run -n 4
 
-# Generate JSON report for CI/CD
-pytest --json-report --json-report-file=report.json
+# Useful for running many test cases faster
+deepeval test run commit_changes/test_commit_eval.py -n 2
+```
+
+### Cloud Reporting (Optional)
+```bash
+# Login to Confident AI for cloud dashboards
+deepeval login
+
+# Tests automatically sync to cloud
+deepeval test run
+```
+
+### Alternative: Direct Pytest
+```bash
+# You can also use pytest directly (works but not recommended)
+pytest -v
+pytest --html=report.html
 ```
 
 ## How It Works
@@ -133,14 +161,14 @@ Threshold: 70% (0.7) - Tests pass if the score is above this threshold.
 2. Add `README.md` (description of the test case)
 3. Add `diff.txt` (sample git diff to test)
 4. Add `expected_elements.json` (evaluation checklist)
-5. The test will be automatically discovered and run with: `pytest {tool_name}/ -v`
+5. The test will be automatically discovered and run with: `deepeval test run {tool_name}/test_*.py`
 
 Example:
 ```bash
 mkdir -p evals/commit_changes/new_case
 echo "feat: add new feature" > evals/commit_changes/new_case/diff.txt
 echo '{"elements": ["mentions feature", "uses feat: prefix"]}' > evals/commit_changes/new_case/expected_elements.json
-pytest commit_changes/ -v
+deepeval test run commit_changes/test_commit_eval.py
 ```
 
 ## Configuration
@@ -151,6 +179,7 @@ pytest commit_changes/ -v
 - `JUDGE_MODEL`: Judge model for evaluation (default: `gpt-4o`)
 - `ANTHROPIC_API_KEY`: Anthropic API key
 - `OPENAI_API_KEY`: OpenAI API key (required for default judge model)
+- `DEEPEVAL_TELEMETRY_OPT_OUT`: Set to `YES` to disable telemetry (optional)
 
 ### Customizing Metrics
 
@@ -167,7 +196,7 @@ commit_message_metric = GEval(
 
 ## Integration with CI/CD
 
-The evaluation suite can be integrated into CI/CD pipelines:
+The evaluation suite integrates seamlessly into CI/CD pipelines:
 
 ```yaml
 # Example GitHub Actions workflow
@@ -175,7 +204,17 @@ The evaluation suite can be integrated into CI/CD pipelines:
   run: |
     cd evals
     uv pip install -e .
-    pytest --json-report --json-report-file=results.json
+    deepeval test run
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+# With parallel execution for faster CI builds
+- name: Run evaluations (parallel)
+  run: |
+    cd evals
+    uv pip install -e .
+    deepeval test run -n 4
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

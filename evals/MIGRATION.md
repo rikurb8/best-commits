@@ -12,19 +12,21 @@ This guide explains the migration from the custom evaluation system to DeepEval.
 - Run via: `uv run evals/commit_changes/run_eval.py`
 
 ### After (DeepEval)
-- Pytest-based test suite with `test_*.py` files
+- DeepEval-based test suite with `test_*.py` files
 - DeepEval's GEval metric for standardized evaluation
-- Built-in pytest reporting and storage
+- Built-in reporting with optional cloud dashboards
 - Standard test framework with pass/fail assertions
-- Run via: `pytest commit_changes/`
+- Run via: `deepeval test run` (recommended) or `pytest`
 
 ## Key Benefits
 
-1. **Standardization**: Uses industry-standard testing framework (pytest)
-2. **Better Tooling**: Leverage pytest plugins for reporting, coverage, etc.
+1. **Standardization**: Uses industry-standard LLM evaluation framework (DeepEval)
+2. **Better Tooling**: DeepEval CLI with parallel execution and cloud reporting
 3. **Clearer Results**: Pass/fail based on thresholds instead of just scores
 4. **Easier Extension**: Simple to add new metrics and test cases
-5. **CI/CD Integration**: Native pytest support in most CI/CD platforms
+5. **CI/CD Integration**: Native support in most CI/CD platforms
+6. **Parallel Execution**: Run tests faster with `-n` flag
+7. **Cloud Dashboards**: Optional integration with Confident AI platform
 
 ## Migration Steps
 
@@ -41,7 +43,10 @@ This guide explains the migration from the custom evaluation system to DeepEval.
    # Old way
    uv run evals/commit_changes/run_eval.py --case basic_feature
 
-   # New way
+   # New way (recommended)
+   deepeval test run commit_changes/test_commit_eval.py::test_commit_message_generation[basic_feature]
+
+   # Or with pytest (also works)
    pytest commit_changes/test_commit_eval.py::test_commit_message_generation[basic_feature] -v
    ```
 
@@ -50,9 +55,15 @@ This guide explains the migration from the custom evaluation system to DeepEval.
    # Old way
    uv run evals/commit_changes/run_eval.py --summary
 
-   # New way
-   pytest commit_changes/ -v  # Shows pass/fail
-   pytest --html=report.html --self-contained-html  # Generate HTML report
+   # New way (recommended)
+   deepeval test run  # Shows pass/fail with DeepEval reporting
+
+   # Optional: cloud dashboard
+   deepeval login  # One-time setup
+   deepeval test run  # Automatically syncs to cloud
+
+   # Or with pytest
+   pytest commit_changes/ -v
    ```
 
 ### For Developers
@@ -69,10 +80,10 @@ This guide explains the migration from the custom evaluation system to DeepEval.
    # Add files...
    uv run evals/commit_changes/run_eval.py --case new_case
 
-   # New way: Create files, pytest auto-discovers
+   # New way: Create files, DeepEval auto-discovers
    mkdir evals/commit_changes/new_case
    # Add files...
-   pytest commit_changes/ -v  # Automatically finds and runs new case
+   deepeval test run commit_changes/test_commit_eval.py  # Automatically finds and runs new case
    ```
 
 3. **Customizing evaluation**:
@@ -97,15 +108,16 @@ If you need the old behavior:
 uv run evals/commit_changes/run_eval.py  # Still works
 ```
 
-However, we recommend migrating to the new pytest-based system.
+However, we recommend migrating to the new DeepEval-based system.
 
 ## Database Storage
 
-The old SQLite storage system (`evals/storage/`) is deprecated. DeepEval and pytest provide their own result storage and reporting mechanisms:
+The old SQLite storage system (`evals/storage/`) is deprecated. DeepEval provides better result storage and reporting:
 
-- **Test results**: Use `pytest --json-report` or `pytest --html`
-- **Historical tracking**: Use CI/CD pipeline artifacts
-- **Comparison**: Use pytest's built-in comparison and diff tools
+- **Test results**: `deepeval test run` automatically tracks results
+- **Cloud dashboards**: `deepeval login` + `deepeval test run` syncs to Confident AI
+- **Historical tracking**: Use CI/CD pipeline artifacts or Confident AI platform
+- **Comparison**: Built-in comparison in cloud dashboards
 
 If you need to access old results:
 ```python

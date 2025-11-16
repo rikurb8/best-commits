@@ -1,24 +1,52 @@
 [project]
 name = "best-commits"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI-powered Git workflow automation tools"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "best-commits contributors" }
+]
+keywords = ["git", "commit", "review", "ai", "automation", "llm", "developer-tools"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
 dependencies = [
     "litellm>=1.0.0",
     "rich>=13.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/rikurb8/best-commits"
+Repository = "https://github.com/rikurb8/best-commits"
+Issues = "https://github.com/rikurb8/best-commits/issues"
 
 [project.scripts]
 commit = "tools.commit_changes:main"
 review = "tools.review_changes:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatchling.build.targets.wheel]
-packages = ["tools"]
+[tool.setuptools]
+packages = ["tools", "tools.commit_changes", "tools.review_changes"]
+
+[tool.setuptools.package-data]
+"tools.commit_changes" = ["*.md"]
+"tools.review_changes" = ["*.md"]
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]

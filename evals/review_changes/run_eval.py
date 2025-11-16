@@ -80,7 +80,7 @@ def load_test_case(case_path: Path) -> Dict[str, Any]:
 def generate_review(diff: str, model: str) -> str:
     """Generate code review using the tool's logic."""
     # Import the actual tool
-    from tools.review_changes.main import review_changes as tool_review
+    from tools.review_changes.review_changes.main import review_changes as tool_review
 
     # Set the model via environment variable
     original_model = os.getenv("BETTER_COMMIT_MODEL")

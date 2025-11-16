@@ -76,7 +76,7 @@ def load_test_case(case_path: Path) -> Dict[str, Any]:
 def generate_commit_message(diff: str, model: str) -> str:
     """Generate commit message using the tool's logic."""
     # Import the actual tool
-    from tools.commit_changes.main import generate_commit_message as tool_generate
+    from tools.commit_changes.commit_changes.main import generate_commit_message as tool_generate
 
     # Set the model via environment variable
     original_model = os.getenv("BETTER_COMMIT_MODEL")

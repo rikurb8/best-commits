@@ -1,5 +1,7 @@
 #!/bin/bash
-# Install best-commits tools globally by creating symlinks in ~/.local/bin
+# Install best-commits tools using uv tool install
+#
+# Each tool is installed independently from its subdirectory.
 
 set -e
 
@@ -14,36 +16,47 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Installation directory (user's local bin)
-INSTALL_DIR="${HOME}/.local/bin"
-
-# Available tools
 TOOLS=("commit" "review")
 
 print_usage() {
-    echo "Usage: $0 [COMMAND] [TOOL]"
+    echo "Usage: $0 [OPTIONS] [TOOL]"
     echo ""
-    echo "Install or uninstall best-commits tools globally"
+    echo "Install best-commits tools using uv tool install"
     echo ""
-    echo "Commands:"
-    echo "  install [TOOL]     - Install tools (default command)"
-    echo "  uninstall [TOOL]   - Uninstall/remove tools"
+    echo "Options:"
+    echo "  -e, --editable    Install in editable mode for development"
+    echo "  -u, --uninstall   Uninstall the tools"
+    echo "  -h, --help        Show this help message"
     echo ""
-    echo "Available tools:"
-    echo "  commit    - AI-powered commit message generator"
-    echo "  review    - AI-powered code review tool"
-    echo "  all       - All tools (default)"
+    echo "Tools:"
+    echo "  commit            Install only commit tool"
+    echo "  review            Install only review tool"
+    echo "  all               Install all tools (default)"
     echo ""
     echo "Examples:"
-    echo "  $0                    # Install all tools"
-    echo "  $0 install commit     # Install only commit tool"
-    echo "  $0 uninstall review   # Uninstall review tool"
-    echo "  $0 uninstall all      # Uninstall all tools"
+    echo "  $0                # Install all tools"
+    echo "  $0 commit         # Install only commit tool"
+    echo "  $0 --editable     # Install all tools in editable mode"
+    echo "  $0 -e commit      # Install commit tool in editable mode"
+    echo "  $0 --uninstall    # Uninstall all tools"
+    echo "  $0 -u review      # Uninstall only review tool"
+}
+
+check_uv() {
+    if ! command -v uv &> /dev/null; then
+        echo -e "${RED}Error: 'uv' is not installed${NC}"
+        echo ""
+        echo "Install uv from: https://docs.astral.sh/uv/"
+        echo ""
+        echo "Quick install:"
+        echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"
+        echo ""
+        exit 1
+    fi
 }
 
 get_tool_dir() {
     local tool_name=$1
-
     case "$tool_name" in
         commit)
             echo "commit_changes"
@@ -57,152 +70,187 @@ get_tool_dir() {
     esac
 }
 
+get_package_name() {
+    local tool_name=$1
+    case "$tool_name" in
+        commit)
+            echo "best-commits-commit"
+            ;;
+        review)
+            echo "best-commits-review"
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
 install_tool() {
     local tool_name=$1
+    local editable=$2
     local tool_dir=$(get_tool_dir "$tool_name")
+    local package_name=$(get_package_name "$tool_name")
 
     if [ -z "$tool_dir" ]; then
         echo -e "${RED}Error: Unknown tool '$tool_name'${NC}"
         return 1
     fi
 
-    local source_path="${PROJECT_ROOT}/tools/${tool_dir}/__main__.py"
-    local target_path="${INSTALL_DIR}/${tool_name}"
+    local tool_path="$PROJECT_ROOT/tools/$tool_dir"
 
-    # Check if source exists
-    if [ ! -f "$source_path" ]; then
-        echo -e "${RED}Error: Source file not found: $source_path${NC}"
+    if [ ! -d "$tool_path" ]; then
+        echo -e "${RED}Error: Tool directory not found: $tool_path${NC}"
         return 1
     fi
 
-    # Create install directory if it doesn't exist
-    if [ ! -d "$INSTALL_DIR" ]; then
-        echo -e "${CYAN}Creating directory: $INSTALL_DIR${NC}"
-        mkdir -p "$INSTALL_DIR"
+    echo -e "${CYAN}Installing $tool_name...${NC}"
+
+    if [ "$editable" = true ]; then
+        uv tool install --editable "$tool_path"
+    else
+        uv tool install "$tool_path"
     fi
 
-    # Remove existing symlink or file if it exists
-    if [ -L "$target_path" ] || [ -f "$target_path" ]; then
-        echo -e "${YELLOW}Removing existing installation: $target_path${NC}"
-        rm "$target_path"
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Successfully installed '$tool_name'${NC}"
+    else
+        echo -e "${RED}✗ Failed to install '$tool_name'${NC}"
+        return 1
     fi
-
-    # Create symlink
-    echo -e "${CYAN}Creating symlink: $target_path -> $source_path${NC}"
-    ln -s "$source_path" "$target_path"
-
-    # Make executable
-    chmod +x "$source_path"
-
-    echo -e "${GREEN}✓ Successfully installed '$tool_name'${NC}"
 }
 
 uninstall_tool() {
     local tool_name=$1
-    local target_path="${INSTALL_DIR}/${tool_name}"
+    local package_name=$(get_package_name "$tool_name")
 
-    if [ ! -e "$target_path" ]; then
-        echo -e "${YELLOW}Tool '$tool_name' is not installed${NC}"
-        return 0
+    if [ -z "$package_name" ]; then
+        echo -e "${RED}Error: Unknown tool '$tool_name'${NC}"
+        return 1
     fi
 
-    echo -e "${CYAN}Removing: $target_path${NC}"
-    rm "$target_path"
-    echo -e "${GREEN}✓ Successfully uninstalled '$tool_name'${NC}"
-}
+    echo -e "${CYAN}Uninstalling $tool_name...${NC}"
 
-check_path() {
-    if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-        echo ""
-        echo -e "${YELLOW}⚠ Warning: $INSTALL_DIR is not in your PATH${NC}"
-        echo -e "${YELLOW}Add this line to your ~/.bashrc, ~/.zshrc, or equivalent:${NC}"
-        echo -e "${CYAN}export PATH=\"\$HOME/.local/bin:\$PATH\"${NC}"
-        echo ""
+    uv tool uninstall "$package_name" 2>/dev/null
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Successfully uninstalled '$tool_name'${NC}"
+    else
+        echo -e "${YELLOW}! Tool '$tool_name' was not installed${NC}"
     fi
 }
 
-check_uv() {
-    if ! command -v uv &> /dev/null; then
-        echo -e "${YELLOW}⚠ Warning: 'uv' is not installed${NC}"
-        echo -e "${YELLOW}Install uv from: https://docs.astral.sh/uv/getting-started/installation/${NC}"
+install_all_tools() {
+    local editable=$1
+    local failed=0
+
+    echo -e "${CYAN}=== Installing Best Commits Tools ===${NC}"
+    echo ""
+
+    for tool in "${TOOLS[@]}"; do
+        install_tool "$tool" "$editable"
+        if [ $? -ne 0 ]; then
+            failed=1
+        fi
         echo ""
+    done
+
+    if [ $failed -eq 0 ]; then
+        echo -e "${GREEN}✓ All tools installed successfully!${NC}"
+        echo ""
+        echo "Commands available:"
+        echo "  commit    # Generate AI-powered commit messages"
+        echo "  review    # Get AI code review feedback"
+        echo ""
+        echo "Update tools:"
+        echo "  uv tool upgrade best-commits-commit"
+        echo "  uv tool upgrade best-commits-review"
+        echo ""
+        echo "View installed tools:"
+        echo "  uv tool list"
+        echo ""
+    else
+        echo -e "${RED}✗ Some tools failed to install${NC}"
+        exit 1
     fi
+}
+
+uninstall_all_tools() {
+    echo -e "${CYAN}=== Uninstalling Best Commits Tools ===${NC}"
+    echo ""
+
+    for tool in "${TOOLS[@]}"; do
+        uninstall_tool "$tool"
+    done
+
+    echo ""
+    echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+    echo ""
 }
 
 main() {
+    check_uv
+
+    local editable=false
+    local uninstall=false
+    local tool=""
+
     # Parse arguments
-    local command="${1:-install}"
-    local target="${2:-all}"
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -e|--editable)
+                editable=true
+                shift
+                ;;
+            -u|--uninstall)
+                uninstall=true
+                shift
+                ;;
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            commit|review|all)
+                tool=$1
+                shift
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo ""
+                print_usage
+                exit 1
+                ;;
+        esac
+    done
 
-    # Handle legacy single-arg usage
-    if [ "$command" = "-h" ] || [ "$command" = "--help" ]; then
-        print_usage
-        exit 0
-    elif [ "$command" != "install" ] && [ "$command" != "uninstall" ]; then
-        # If first arg is not a command, treat it as a tool name for install
-        target="$command"
-        command="install"
+    # Default to all tools if not specified
+    if [ -z "$tool" ]; then
+        tool="all"
     fi
 
-    if [ "$target" = "-h" ] || [ "$target" = "--help" ]; then
-        print_usage
-        exit 0
+    if [ "$uninstall" = true ]; then
+        if [ "$tool" = "all" ]; then
+            uninstall_all_tools
+        else
+            echo -e "${CYAN}=== Uninstalling Best Commits Tools ===${NC}"
+            echo ""
+            uninstall_tool "$tool"
+            echo ""
+            echo -e "${GREEN}✓ Uninstallation complete!${NC}"
+        fi
+    else
+        if [ "$tool" = "all" ]; then
+            install_all_tools $editable
+        else
+            echo -e "${CYAN}=== Installing Best Commits Tools ===${NC}"
+            echo ""
+            install_tool "$tool" $editable
+            echo ""
+            echo -e "${GREEN}✓ Installation complete!${NC}"
+            echo ""
+            echo "Command available: $tool"
+            echo ""
+        fi
     fi
-
-    # Execute command
-    case "$command" in
-        install)
-            echo -e "${CYAN}=== Best Commits Tool Installer ===${NC}"
-            echo ""
-
-            # Check prerequisites
-            check_uv
-
-            # Install requested tools
-            if [ "$target" = "all" ]; then
-                for tool in "${TOOLS[@]}"; do
-                    install_tool "$tool"
-                done
-            else
-                install_tool "$target"
-            fi
-
-            echo ""
-            check_path
-
-            echo -e "${GREEN}Installation complete!${NC}"
-            echo ""
-            echo "Usage:"
-            echo "  commit    # Generate AI-powered commit messages"
-            echo "  review    # Get AI code review feedback"
-            echo ""
-            ;;
-
-        uninstall)
-            echo -e "${CYAN}=== Best Commits Tool Uninstaller ===${NC}"
-            echo ""
-
-            # Uninstall requested tools
-            if [ "$target" = "all" ]; then
-                for tool in "${TOOLS[@]}"; do
-                    uninstall_tool "$tool"
-                done
-            else
-                uninstall_tool "$target"
-            fi
-
-            echo ""
-            echo -e "${GREEN}Uninstallation complete!${NC}"
-            echo ""
-            ;;
-
-        *)
-            echo -e "${RED}Error: Unknown command '$command'${NC}"
-            echo ""
-            print_usage
-            exit 1
-            ;;
-    esac
 }
 
 main "$@"
